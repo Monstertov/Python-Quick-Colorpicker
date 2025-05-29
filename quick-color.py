@@ -24,7 +24,9 @@ except ImportError as e:
     print("Run: pip install pynput pillow pyautogui pyperclip rich")
     sys.exit(1)
 
-# --- CONFIGURABLE SETTINGS ---
+# --- CONFIGURABLE HOTKEYS ---
+# I have not tested this extensively but you can customize this for your specific environment.
+# For more options, see pynput's documentation: https://pynput.readthedocs.io/en/latest/keyboard.html
 config = {
     "hotkey_modifiers": {keyboard.Key.ctrl},
     "hotkey_trigger": keyboard.Key.f1,
