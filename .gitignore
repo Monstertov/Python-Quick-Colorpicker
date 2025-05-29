@@ -20,14 +20,6 @@ wheels/
 .installed.cfg
 *.egg
 
-# Debian packaging
-debian/
-*.deb
-*.changes
-*.buildinfo
-*.dsc
-*.tar.gz
-
 # IDE
 .vscode/
 .idea/
@@ -51,4 +43,5 @@ Thumbs.db
 
 # Release management
 release.py
-.release_token 
+.release_token
+RELEASE.md 
