@@ -15,12 +15,12 @@ A cross-platform Python script that lets users pick a color anywhere on the scre
 ## Requirements
 
 - Python 3.x
-- Packages: `pynput`, `Pillow`, `pyautogui`
+- Packages: `pynput`, `pyautogui`
 
 Install dependencies:
 
 ```bash
-pip install pynput pillow pyautogui
+pip install pynput pyautogui
 ```
 
 ## Usage
