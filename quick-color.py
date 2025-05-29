@@ -5,7 +5,7 @@
 # pip install pynput pillow pyautogui
 
 from pynput import mouse, keyboard
-from PIL import ImageGrab
+import pyautogui
 import time
 
 shift_pressed = False
@@ -13,15 +13,23 @@ shift_pressed = False
 def print_color_block(r, g, b):
     print(f"\033[48;2;{r};{g};{b}m  \033[0m", end='')
 
+def get_color_at(x, y):
+    try:
+        r, g, b = pyautogui.pixel(x, y)
+        return r, g, b, '#{:02x}{:02x}{:02x}'.format(r, g, b)
+    except Exception:
+        return None, None, None, None
+
 def on_click(x, y, button, pressed):
     global shift_pressed
     if pressed and button == mouse.Button.left and shift_pressed:
-        img = ImageGrab.grab(bbox=(x, y, x+1, y+1))
-        r, g, b = img.getpixel((0, 0))
-        hex_color = '#{:02x}{:02x}{:02x}'.format(r, g, b)
-        print(f"Color at ({x},{y}): {hex_color} ", end='')
-        print_color_block(r, g, b)
-        print()
+        r, g, b, hex_color = get_color_at(x, y)
+        if hex_color:
+            print(f"Color at ({x},{y}): {hex_color} ", end='')
+            print_color_block(r, g, b)
+            print()
+        else:
+            print(f"Could not get color at ({x},{y})")
 
 def on_press(key):
     global shift_pressed
