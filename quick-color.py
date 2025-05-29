@@ -18,18 +18,18 @@ import pyautogui
 # I have not tested this extensivly but you can customize this for your specific environment.
 # For more options, see pynput's documentation: https://pynput.readthedocs.io/en/latest/keyboard.html
 config = {
-    "hotkey_modifiers": {keyboard.Key.ctrl, keyboard.Key.shift},
+    "hotkey_modifiers": {keyboard.Key.ctrl},
     "hotkey_trigger": keyboard.Key.f1,
     "trigger_type": "keypress"
 }
 
 # Example config for Shift + Left Click
-config = {
+#config = {
     # The key you hold down (e.g., keyboard.Key.shift, keyboard.Key.ctrl, keyboard.Key.alt)
-    "hotkey_modifiers": {keyboard.Key.shift}, 
-    "hotkey_trigger": mouse.Button.left,    
-    "trigger_type": "click"                 
-}
+#    "hotkey_modifiers": {keyboard.Key.shift}, 
+#    "hotkey_trigger": mouse.Button.left,    
+#    "trigger_type": "click"                 
+#}
 # --- END CONFIGURABLE HOTKEYS ---
 
 modifiers_pressed = set()
@@ -87,8 +87,6 @@ def on_press(key):
 
     if config["trigger_type"] == "keypress" and key == config["hotkey_trigger"]:
         if config["hotkey_modifiers"].issubset(modifiers_pressed):
-            if current_x is None or current_y is None:
-                current_x, current_y = pyautogui.position()
             pick_color_and_print(current_x, current_y)
 
 def on_release(key):
@@ -109,8 +107,13 @@ else:
 
 print(f"{trigger_info} to pick color. Press Ctrl+C to exit.")
 
+def on_move(x, y):
+    global current_x, current_y
+    current_x, current_y = x, y
+    
+
 # --- Start Listeners ---
-mouse_listener = mouse.Listener(on_click=on_click)
+mouse_listener = mouse.Listener(on_click=on_click, on_move=on_move)
 keyboard_listener = keyboard.Listener(on_press=on_press, on_release=on_release)
 
 mouse_listener.start()
@@ -118,8 +121,6 @@ keyboard_listener.start()
 
 try:
     while True:
-        if config["trigger_type"] == "keypress":
-            current_x, current_y = pyautogui.position()
         time.sleep(0.01)
 except KeyboardInterrupt:
     print("\nExited by user.")
