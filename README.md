@@ -28,7 +28,7 @@ pip install pynput pyautogui
 Run the script:
 
 ```bash
-python quick_colorpicker.py
+python quick_color.py
 ```
 
 Then hold **Ctrl** and **F1** anywhere on the screen to get the color under the cursor.
