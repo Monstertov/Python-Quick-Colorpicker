@@ -1,8 +1,13 @@
 # Python Quick Colorpicker
 
+[![PyPI version](https://badge.fury.io/py/quick-colorpicker.svg)](https://badge.fury.io/py/quick-colorpicker)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/quick-colorpicker)](https://pypi.org/project/quick-colorpicker/)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/quick-colorpicker)](https://pypi.org/project/quick-colorpicker/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A professional cross-platform color picking utility that lets you instantly grab colors from anywhere on your screen. Perfect for developers, designers, and digital artists who need quick access to color values.
 
-<img src="https://tov.monster/host/pythoncolorpicker.png?t=20250530" alt="colorpickimg">
+<img src="https://tov.monster/host/pythoncolorpicker.png" alt="colorpickimg">
 
 ## Features
 
@@ -15,32 +20,37 @@ A professional cross-platform color picking utility that lets you instantly grab
 - Beautiful terminal UI with color previews
 - Lightweight and fast
 
-## Requirements
-
-- Python 3.x
-- Required packages:
-  ```bash
-  pip install -r requirements.txt
-  ```
-
 ## Installation
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/Monstertov/quick-colorpicker.git
-   cd quick-colorpicker
-   ```
+### Via pip (Recommended)
+```bash
+pip install quick-colorpicker
+```
 
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+### From source
+```bash
+git clone https://github.com/Monstertov/quick-colorpicker.git
+cd quick-colorpicker
+pip install -r requirements.txt
+python setup.py install
+```
+
+## Requirements
+
+- Python 3.6 or higher
+- Dependencies are automatically installed with pip:
+  - pynput
+  - pyautogui
+  - Pillow
+  - pyperclip
+  - rich
 
 ## Usage
 
-Run the script:
+### Quick Start
+After installation, simply run:
 ```bash
-python quick-color.py
+quick-colorpicker
 ```
 
 ### Keyboard Shortcuts
@@ -64,7 +74,7 @@ Colors are displayed in multiple formats:
 #### Clipboard Integration
 Colors are automatically copied to your clipboard in your preferred format (configurable in the script)
 
-## ⚙️ Configuration
+## Configuration
 
 You can customize the following settings in the script:
 ```python

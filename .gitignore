@@ -42,4 +42,13 @@ env/
 
 # OS
 .DS_Store
-Thumbs.db 
+Thumbs.db
+
+# Secrets and configuration
+.pypirc
+*.pypirc
+~/.pypirc
+
+# Release management
+release.py
+.release_token 
