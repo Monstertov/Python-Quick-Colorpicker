@@ -7,7 +7,7 @@
 
 A professional cross-platform color picking utility that lets you instantly grab colors from anywhere on your screen. Perfect for developers, designers, and digital artists who need quick access to color values.
 
-<img src="https://tov.monster/host/pythoncolorpicker.png" alt="colorpickimg">
+<img src="https://tov.monster/host/pythoncolorpicker.png?t=0138" alt="colorpickimg">
 
 ## Features
 
