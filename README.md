@@ -2,6 +2,8 @@
 
 A cross-platform Python script that lets users pick a color anywhere on the screen by pressing **Shift + Left Click**. The picked color is displayed in HEX format along with a color preview block in the terminal.
 
+<img src="https://tov.monster/host/pythoncolorpicker.png" alt="colorpickimg">
+
 ## Features
 
 - Pick colors anywhere on screen with Shift + Left Click
