@@ -4,11 +4,28 @@
 # Requirements
 # pip install pynput pillow pyautogui
 
-from pynput import mouse, keyboard
-import pyautogui
-import time
+import sys, time, os, sys
+
+try:
+    from pynput import mouse, keyboard
+except ImportError as e:
+    print(f"Failed to import pynput modules: {e}")
+    print("Ensure you are running this in a supported GUI environment.")
+    sys.exit(1)
+    
+import pynput, pyautogui
 
 shift_pressed = False
+
+def check_display():
+    if sys.platform.startswith('linux'):
+        display = os.environ.get('DISPLAY')
+        if not display:
+            print("Error: DISPLAY environment variable is not set. Are you running in a GUI session?")
+            sys.exit(1)
+
+check_display()
+
 
 def print_color_block(r, g, b):
     print(f"\033[48;2;{r};{g};{b}m  \033[0m", end='')
