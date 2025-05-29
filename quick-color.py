@@ -15,7 +15,7 @@ except ImportError as e:
 import pyautogui
 
 # --- CONFIGURABLE HOTKEYS ---
-# I have not tested this extensivly but you can customize this for your specific environment.
+# I have not tested this extensively but you can customize this for your specific environment.
 # For more options, see pynput's documentation: https://pynput.readthedocs.io/en/latest/keyboard.html
 config = {
     "hotkey_modifiers": {keyboard.Key.ctrl},
