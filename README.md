@@ -11,6 +11,7 @@ A cross-platform Python script that lets users pick a color anywhere on the scre
 - Shows a colored block in terminal as preview (_Warning: This may not be accurate, as color rendering depends on the terminal used_)
 - Cross-platform (Windows, macOS, Linux)
 - Clean exit with Ctrl+C
+- In-Script configurable hotkeys for Color Picking
 
 ## Requirements
 
