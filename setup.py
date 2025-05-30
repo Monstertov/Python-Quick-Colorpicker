@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="quick-colorpicker",
-    version="1.0.2",
+    version="1.0.3",
     author="Monstertov",
     author_email="rob@monstertov.nl",
     description="A professional cross-platform color picking utility",
