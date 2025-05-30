@@ -1,9 +1,22 @@
 # Python Quick Colorpicker
 
-![PyPI - Version](https://img.shields.io/pypi/v/quick-colorpicker)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/quick-colorpicker)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/quick-colorpicker)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+  <div style="display: flex; gap: 8px; align-items: center;">
+    <a href="https://pypi.org/project/quick-colorpicker/" style="text-decoration: none;">
+      <img src="https://img.shields.io/pypi/v/quick-colorpicker" alt="PyPI - Version">
+    </a>
+    <a href="https://pypi.org/project/quick-colorpicker/" style="text-decoration: none;">
+      <img src="https://img.shields.io/pypi/pyversions/quick-colorpicker" alt="PyPI - Python Version">
+    </a>
+    <a href="https://pypi.org/project/quick-colorpicker/" style="text-decoration: none;">
+      <img src="https://img.shields.io/pypi/dm/quick-colorpicker" alt="PyPI - Downloads">
+    </a>
+    <a href="https://opensource.org/licenses/MIT">
+      <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT">
+    </a>
+</div>
+
+
 
 A professional cross-platform color picking utility that lets you instantly grab colors from anywhere on your screen. Perfect for developers, designers, and digital artists who need quick access to color values.
 
