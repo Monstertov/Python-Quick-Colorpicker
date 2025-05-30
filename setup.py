@@ -7,7 +7,7 @@ setup(
     name="quick-colorpicker",
     version="1.0.2",
     author="Monstertov",
-    author_email="rob@monstertov.nl",  # Replace with your email
+    author_email="rob@monstertov.nl",
     description="A professional cross-platform color picking utility",
     long_description=long_description,
     long_description_content_type="text/markdown",
