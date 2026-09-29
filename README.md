@@ -36,7 +36,12 @@ cd Python-Quick-Colorpicker
 pip install .
 ```
 
-Requires Python 3.9 or newer. Dependencies (pynput, Pillow, pyperclip, rich) are installed automatically.
+Needs Python 3.9 or newer. pip installs everything else for you:
+
+- [pynput](https://pypi.org/project/pynput/): global hotkeys and the mouse position
+- [Pillow](https://pypi.org/project/pillow/): reads the pixels from the screen
+- [pyperclip](https://pypi.org/project/pyperclip/): copies the color to the clipboard
+- [rich](https://pypi.org/project/rich/): the colored terminal output
 
 ## Usage
 

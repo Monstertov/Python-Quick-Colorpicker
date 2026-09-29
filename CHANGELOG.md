@@ -4,6 +4,13 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [1.1.1] - 2026-09-30
+
+### Fixed
+- PyPI listed no specific Python versions, so the "python" badge showed a stale or bare value.
+  The supported versions (3.9 to 3.14) are now declared.
+- README explains what each dependency is for.
+
 ## [1.1.0] - 2026-09-30
 
 ### Added
@@ -51,6 +58,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 ### Added
 - First release on PyPI: Ctrl + F1 to pick, Ctrl + H for history, HEX/RGB/HSL output, clipboard copy.
 
+[1.1.1]: https://github.com/Monstertov/Python-Quick-Colorpicker/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/Monstertov/Python-Quick-Colorpicker/compare/v1.0.3...v1.1.0
 [1.0.3]: https://github.com/Monstertov/Python-Quick-Colorpicker/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/Monstertov/Python-Quick-Colorpicker/compare/v1.0.1...v1.0.2
