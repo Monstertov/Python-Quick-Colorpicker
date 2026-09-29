@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quick-colorpicker"
+dynamic = ["version"]
+description = "Pick the color of the exact pixel under your mouse cursor with a global hotkey, right from the terminal"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Monstertov", email = "rob@monstertov.nl" }]
+requires-python = ">=3.9"
+dependencies = [
+    "pynput>=1.8.1",
+    "Pillow>=10.3.0",
+    "pyperclip>=1.8.2",
+    "rich>=12.0.0",
+]
+keywords = ["color-picker", "colour-picker", "eyedropper", "hex", "rgb", "hsl", "tailwind", "clipboard", "cli"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Multimedia :: Graphics",
+    "Topic :: Utilities",
+]
+
+[project.urls]
+Homepage = "https://github.com/Monstertov/Python-Quick-Colorpicker"
+Issues = "https://github.com/Monstertov/Python-Quick-Colorpicker/issues"
+Changelog = "https://github.com/Monstertov/Python-Quick-Colorpicker/blob/main/CHANGELOG.md"
+
+[project.scripts]
+quick-colorpicker = "quick_colorpicker.main:main"
+
+[tool.setuptools]
+packages = ["quick_colorpicker"]
+
+[tool.setuptools.dynamic]
+version = { attr = "quick_colorpicker.__version__" }

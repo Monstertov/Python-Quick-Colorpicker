@@ -1,264 +1,184 @@
 #!/usr/bin/env python3
 """
-Quick Color Picker - A cross-platform color picking utility
-that allows you to pick colors from anywhere on your screen.
+Quick Color Picker - pick the color of the exact pixel under your mouse cursor,
+from anywhere on your screen, with a global hotkey.
 """
 
-import sys
-import time
-import os
+import argparse
 import json
-from datetime import datetime
+import re
+import sys
 from pathlib import Path
-try:
-    import pyperclip  # For clipboard operations
-    from pynput import mouse, keyboard
-    import pyautogui
-    from rich.console import Console
-    from rich.table import Table
-except ImportError as e:
-    print(f"Failed to import required modules: {e}")
-    print("Installing required packages...")
-    print("Run: pip install quick-colorpicker")
-    sys.exit(1)
 
-# --- CONFIGURABLE HOTKEYS ---
-# I have not tested this extensively but you can customize this for your specific environment.
-# For more options, see pynput's documentation: https://pynput.readthedocs.io/en/latest/keyboard.html
-config = {
-    "hotkey_modifiers": {keyboard.Key.ctrl},
-    "hotkey_trigger": keyboard.Key.f1,
-    "trigger_type": "keypress",
-    "max_history": 10,  # Maximum number of colors to keep in history
-    "default_color_format": "hex",  # Options: hex, rgb, hsl
-    "auto_copy": True,  # Automatically copy color to clipboard
+from rich.console import Console
+from rich.markup import escape
+
+from quick_colorpicker import __version__
+from quick_colorpicker.colors import FORMATS, hex_to_rgb
+
+APP_DIR = Path.home() / ".quick-colorpicker"
+HISTORY_FILE = APP_DIR / "color_history.json"
+CONFIG_FILE = APP_DIR / "config.json"
+
+# Every setting can be overridden in CONFIG_FILE. Hotkeys are "+"-joined: modifiers
+# (ctrl, shift, alt, cmd) and one key: a pynput Key name (f1, space, ...), a single
+# character, or a mouse button as left_click / right_click / middle_click.
+# Set a hotkey to "" to disable it.
+DEFAULTS = {
+    "pick_hotkey": "ctrl+f1",
+    "alt_pick_hotkey": "ctrl+shift+f1",
+    "live_hotkey": "ctrl+f2",
+    "history_hotkey": "ctrl+h",
+    "format": "hex",
+    "alt_format": "rgb",
+    "auto_copy": True,
+    "history_size": 10,
+    "loupe": True,
 }
 
-# Initialize Rich console for better formatting
 console = Console()
 
-# Create application data directory
-app_data_dir = Path.home() / ".quick-colorpicker"
-app_data_dir.mkdir(exist_ok=True)
-history_file = app_data_dir / "color_history.json"
 
-modifiers_pressed = set()
-current_x, current_y = None, None
-color_history = []
-
-def load_history():
-    """Load color history from file."""
-    if history_file.exists():
-        try:
-            with open(history_file, 'r') as f:
-                return json.load(f)
-        except json.JSONDecodeError:
-            return []
-    return []
-
-def save_history():
-    """Save color history to file."""
-    with open(history_file, 'w') as f:
-        json.dump(color_history[-config["max_history"]:], f)
-
-def rgb_to_hsl(r, g, b):
-    """Convert RGB to HSL color format."""
-    r, g, b = r/255, g/255, b/255
-    cmax, cmin = max(r, g, b), min(r, g, b)
-    delta = cmax - cmin
-
-    # Calculate hue
-    if delta == 0:
-        h = 0
-    elif cmax == r:
-        h = 60 * ((g-b)/delta % 6)
-    elif cmax == g:
-        h = 60 * ((b-r)/delta + 2)
-    else:
-        h = 60 * ((r-g)/delta + 4)
-
-    # Calculate lightness
-    l = (cmax + cmin) / 2
-
-    # Calculate saturation
-    s = 0 if delta == 0 else delta / (1 - abs(2*l - 1))
-
-    return round(h), round(s*100), round(l*100)
-
-def format_color(r, g, b, format_type="hex"):
-    """Format color in specified format."""
-    if format_type == "hex":
-        return '#{:02x}{:02x}{:02x}'.format(r, g, b)
-    elif format_type == "rgb":
-        return f"rgb({r}, {g}, {b})"
-    elif format_type == "hsl":
-        h, s, l = rgb_to_hsl(r, g, b)
-        return f"hsl({h}, {s}%, {l}%)"
-    return '#{:02x}{:02x}{:02x}'.format(r, g, b)
-
-def print_color_block(r, g, b, hex_color):
-    """Print a color block with information."""
-    table = Table(show_header=False, box=None)
-    table.add_row(
-        f"[white]Color at ({current_x},{current_y}):[/white]",
-        f"[{hex_color}]██████[/]",
-        f"[white]HEX: {format_color(r, g, b, 'hex')}[/white]",
-        f"[white]RGB: {format_color(r, g, b, 'rgb')}[/white]",
-        f"[white]HSL: {format_color(r, g, b, 'hsl')}[/white]"
-    )
-    console.print(table)
-
-def get_color_at(x, y):
-    """Get color at specified coordinates."""
+def load_config(path=CONFIG_FILE):
+    """Defaults, overridden by the JSON config file if there is one."""
+    config = dict(DEFAULTS)
+    if not path.exists():
+        return config
     try:
-        r, g, b = pyautogui.pixel(x, y)
-        return r, g, b, '#{:02x}{:02x}{:02x}'.format(r, g, b)
-    except Exception:
-        return None, None, None, None
+        user = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(user, dict):
+            raise ValueError("expected a JSON object")
+    except (OSError, ValueError) as e:
+        console.print(f"[red]Ignoring {escape(str(path))}: {escape(str(e))}[/red]")
+        return config
+    for key in sorted(set(user) - set(DEFAULTS)):
+        console.print(f"[yellow]Unknown config key {key!r} in {escape(str(path))}[/yellow]")
+    config.update({k: v for k, v in user.items() if k in DEFAULTS})
+    return config
 
-def pick_color_and_print(x, y):
-    """Pick color and display information."""
-    r, g, b, hex_color = get_color_at(x, y)
-    if hex_color:
-        # Add to history
-        color_data = {
-            "hex": hex_color,
-            "rgb": (r, g, b),
-            "timestamp": datetime.now().isoformat(),
-            "coordinates": (x, y)
-        }
-        color_history.append(color_data)
-        if len(color_history) > config["max_history"]:
-            color_history.pop(0)
-        save_history()
 
-        # Display color information
-        print_color_block(r, g, b, hex_color)
-        
-        # Copy to clipboard if enabled
-        if config["auto_copy"]:
-            color_str = format_color(r, g, b, config["default_color_format"])
-            try:
-                pyperclip.copy(color_str)
-                console.print(f"[green]✓[/green] Copied to clipboard: {color_str}")
-            except Exception as e:
-                console.print(f"[red]Failed to copy to clipboard: {e}[/red]")
+def check_config(config):
+    """Return a list of problems with config values."""
+    problems = []
+    for key in ("format", "alt_format"):
+        if config[key] not in FORMATS:
+            problems.append(f"{key} must be one of {', '.join(FORMATS)}")
+    size = config["history_size"]
+    if not isinstance(size, int) or isinstance(size, bool) or size < 1:
+        problems.append("history_size must be a whole number of 1 or more")
+    return problems
+
+
+def load_history(path=HISTORY_FILE):
+    """Load the history, skipping entries that are missing fields."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    if not isinstance(data, list):
+        return []
+    return [
+        e for e in data
+        if isinstance(e, dict) and isinstance(e.get("hex"), str) and re.fullmatch(r"#[0-9a-fA-F]{6}", e["hex"])
+        and "timestamp" in e
+    ]
+
+
+def save_history(history, size, path=HISTORY_FILE):
+    try:
+        path.parent.mkdir(exist_ok=True)
+        path.write_text(json.dumps(history[-size:]), encoding="utf-8")
+    except OSError as e:
+        console.print(f"[red]Could not save history to {escape(str(path))}: {escape(str(e))}[/red]")
+
+
+def export_history(history, path):
+    """Write the history (newest first) as .json, .css custom properties or a .gpl palette."""
+    path = Path(path)
+    newest_first = list(reversed(history))
+    suffix = path.suffix.lower()
+    if suffix == ".json":
+        text = json.dumps(newest_first, indent=2) + "\n"
+    elif suffix == ".css":
+        lines = [f"  --color-{i}: {e['hex']};" for i, e in enumerate(newest_first, 1)]
+        text = ":root {\n" + "\n".join(lines) + "\n}\n"
+    elif suffix == ".gpl":
+        lines = ["GIMP Palette", "Name: quick-colorpicker history", "Columns: 0", "#"]
+        for e in newest_first:
+            r, g, b = hex_to_rgb(e["hex"])
+            lines.append(f"{r:3d} {g:3d} {b:3d}\t{e['hex']}")
+        text = "\n".join(lines) + "\n"
     else:
-        console.print(f"[red]Could not get color at ({x},{y})[/red]")
+        raise ValueError(f"unsupported export type {suffix or '(none)'}: use .json, .css or .gpl")
+    path.write_text(text, encoding="utf-8")
 
-def show_history():
-    """Display color picking history."""
-    if not color_history:
-        console.print("[yellow]No colors in history yet[/yellow]")
+
+def positive_int(value):
+    number = int(value)
+    if number < 1:
+        raise argparse.ArgumentTypeError("must be 1 or more")
+    return number
+
+
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(
+        prog="quick-colorpicker",
+        description="Pick the color of the exact pixel under your mouse cursor with a global hotkey.",
+        epilog=f"Settings file: {CONFIG_FILE}",
+    )
+    parser.add_argument("--format", choices=FORMATS, help="format copied by the pick hotkey (default: hex)")
+    parser.add_argument("--alt-format", choices=FORMATS, help="format copied by the alternate pick hotkey (default: rgb)")
+    parser.add_argument("--no-copy", action="store_true", help="do not copy picked colors to the clipboard")
+    parser.add_argument("--no-loupe", action="store_true", help="show a plain swatch instead of the 5x5 pixel zoom")
+    parser.add_argument("--history-size", type=positive_int, metavar="N", help="number of colors to keep (default: 10)")
+    parser.add_argument("--export", metavar="FILE", help="export the color history to FILE (.json, .css or .gpl) and exit")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    return parser.parse_args(argv)
+
+
+def main(argv=None):
+    """Main application entry point."""
+    args = parse_args(argv)
+    config = load_config()
+    for key, value in (("format", args.format), ("alt_format", args.alt_format), ("history_size", args.history_size)):
+        if value is not None:
+            config[key] = value
+    if args.no_copy:
+        config["auto_copy"] = False
+    if args.no_loupe:
+        config["loupe"] = False
+    problems = check_config(config)
+    if problems:
+        for problem in problems:
+            console.print(f"[red]Config error: {escape(problem)}[/red]")
+        sys.exit(2)
+
+    history = load_history()
+
+    if args.export:
+        try:
+            export_history(history, args.export)
+        except (OSError, ValueError) as e:
+            console.print(f"[red]Export failed: {escape(str(e))}[/red]")
+            sys.exit(1)
+        console.print(f"[green]Exported {len(history)} colors to {escape(args.export)}[/green]")
         return
 
-    table = Table(title="Color History")
-    table.add_column("Time", style="cyan")
-    table.add_column("Color", style="white")
-    table.add_column("HEX", style="white")
-    table.add_column("RGB", style="white")
-    table.add_column("HSL", style="white")
-
-    for color in reversed(color_history):
-        r, g, b = color["rgb"]
-        time_str = datetime.fromisoformat(color["timestamp"]).strftime("%H:%M:%S")
-        table.add_row(
-            time_str,
-            f"[{color['hex']}]██████[/]",
-            color["hex"],
-            format_color(r, g, b, "rgb"),
-            format_color(r, g, b, "hsl")
-        )
-    
-    console.print(table)
-
-def on_click(x, y, button, pressed):
-    """Handle mouse click events."""
-    global current_x, current_y
-    current_x, current_y = x, y
-    if config["trigger_type"] == "click" and pressed and config["hotkey_modifiers"].issubset(modifiers_pressed) and button == config["hotkey_trigger"]:
-        pick_color_and_print(x, y)
-
-def normalize_modifier(key):
-    """Normalize modifier keys."""
-    if key in (keyboard.Key.ctrl_l, keyboard.Key.ctrl_r):
-        return keyboard.Key.ctrl
-    if key in (keyboard.Key.shift_l, keyboard.Key.shift_r):
-        return keyboard.Key.shift
-    if key in (keyboard.Key.alt_l, keyboard.Key.alt_r):
-        return keyboard.Key.alt
-    return key
-
-def on_press(key):
-    """Handle keyboard press events."""
-    global current_x, current_y
-    normalized = normalize_modifier(key)
-
-    # Show history when pressing H while holding the modifiers
-    if isinstance(key, keyboard.KeyCode) and hasattr(key, 'char') and key.char == 'h':
-        if config["hotkey_modifiers"].issubset(modifiers_pressed):
-            show_history()
-            return
-
-    if normalized in config["hotkey_modifiers"]:
-        modifiers_pressed.add(normalized)
-
-    if config["trigger_type"] == "keypress" and key == config["hotkey_trigger"]:
-        if config["hotkey_modifiers"].issubset(modifiers_pressed):
-            pick_color_and_print(current_x, current_y)
-
-def on_release(key):
-    """Handle keyboard release events."""
-    normalized = normalize_modifier(key)
-    if normalized in modifiers_pressed:
-        modifiers_pressed.discard(normalized)
-
-def on_move(x, y):
-    """Handle mouse movement events."""
-    global current_x, current_y
-    current_x, current_y = x, y
-
-def main():
-    """Main application entry point."""
-    # Load color history
-    global color_history
-    color_history = load_history()
-
-    # Print welcome message and instructions
-    console.print("[bold blue]Quick Color Picker[/bold blue]")
-    console.print("=" * 50)
-    
-    # Format hotkey information
-    if config["trigger_type"] == "click":
-        trigger_info = " + ".join([str(k).replace('Key.', '').capitalize() for k in config["hotkey_modifiers"]])
-        trigger_info += f" + {str(config['hotkey_trigger']).replace('Button.', '').capitalize()} Click"
-    else:
-        trigger_info = " + ".join([str(k).replace('Key.', '').capitalize() for k in config["hotkey_modifiers"]])
-        if isinstance(config["hotkey_trigger"], keyboard.Key):
-            trigger_info += f" + {str(config['hotkey_trigger']).replace('Key.', '').capitalize()}"
-        elif isinstance(config["hotkey_trigger"], keyboard.KeyCode):
-            trigger_info += f" + {config['hotkey_trigger'].char}"
-
-    console.print(f"[green]•[/green] Press [bold]{trigger_info}[/bold] to pick a color")
-    console.print(f"[green]•[/green] Press [bold]Ctrl + H[/bold] to show color history")
-    console.print(f"[green]•[/green] Press [bold]Ctrl + C[/bold] to exit")
-    console.print(f"[green]•[/green] Colors are automatically copied to clipboard")
-    console.print("=" * 50)
-
-    # Start listeners
-    mouse_listener = mouse.Listener(on_click=on_click, on_move=on_move)
-    keyboard_listener = keyboard.Listener(on_press=on_press, on_release=on_release)
-
-    mouse_listener.start()
-    keyboard_listener.start()
+    try:
+        from quick_colorpicker.picker import Picker
+    except ImportError as e:
+        # pynput raises ImportError when there is no usable display (e.g. Wayland without X, SSH)
+        console.print(f"[red]Could not start: {escape(str(e))}[/red]")
+        console.print("Reinstall with: pip install --upgrade quick-colorpicker")
+        sys.exit(1)
 
     try:
-        while True:
-            time.sleep(0.01)
-    except KeyboardInterrupt:
-        console.print("\n[yellow]Exiting...[/yellow]")
-        mouse_listener.stop()
-        keyboard_listener.stop()
+        picker = Picker(config, history, lambda: save_history(history, config["history_size"]))
+    except ValueError as e:
+        console.print(f"[red]Config error: {escape(str(e))}[/red]")
+        sys.exit(2)
+    picker.run()
+
 
 if __name__ == "__main__":
-    main() 
+    main()
